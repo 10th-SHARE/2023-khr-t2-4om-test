@@ -35,8 +35,8 @@ private:
     double vx_,vy_,rotate_;
     double omega[4];
     const double theta_rad=45.0/180*3.14;
-    const double dist_wheel=208.42; //機体中心からタイヤへの距離[mm]
-    const double inv_rad_wheel=0.0196; //タイヤの半径の逆数[1/mm] 割り算は重い処理なので逆数かける
-    const int k0=1, k1=1, k2=1, k3=1; //タイヤが正転時に反時計回りなら1,時計回りなら-1
+    const double dist_wheel=255.0; //機体中心からタイヤへの距離[mm]
+    const double inv_rad_wheel=0.0157; //タイヤの半径の逆数[1/mm] 割り算は重い処理なので逆数かける
+    const int k0=-1, k1=-1, k2=-1, k3=-1; //タイヤが正転時に反時計回りなら1,時計回りなら-1
 };
 
