@@ -6,10 +6,16 @@
 #include "MotorController.h"
 Serial pc(USBTX,USBRX);
 
-const int RECIEVE_CAN_ID = 0x10; // 自身のCAN ID(0~2047の間の好きな数値．）
+//デバッグ用
+int8_t RX, RY, LX, LY;
+uint8_t R2, L2, up, dwn, lft, rit, sqr, crss, cicl, tri, R1, L1, R3, L3, shr, opt, PSb, touc;
+const int RECIEVE_CAN_ID = 0x12;
+
+
+//const int RECIEVE_CAN_ID = 0x10; //コントローラーデバッグ時はコメントアウト
 const int CAN_Hz = 1000000;//CANに使用するクロック周波数[Hz]. CAN通信相手と共通させる
 
-CAN can(PA_11,PA_12);//CAN_RD, CAN_TDの順
+CAN can(PA_11,PA_12,CAN_Hz);//CAN_RD, CAN_TDの順
 
 //角速度を計算する間隔 303k8では0.01以上下げるとうまくいかなかった
 #define DELTA_T 0.01
@@ -29,7 +35,7 @@ Ec2multi ec[]= {
     Ec2multi(PB_4,PB_5,RESOLUTION),
     Ec2multi(PA_7,PA_6,RESOLUTION),
     Ec2multi(PB_3,PF_1,RESOLUTION),
-    Ec2multi(PA_2,PF_0,RESOLUTION)
+    Ec2multi(PA_2,PF_0,RESOLUTION) //UARTを動作させる時はPA_5に変更、本来はPA_2
 };
 //速度制御のPIDの値,角速度を計算する間隔,dutyの絶対値の上限
 CalPID speed_pid[]= {
@@ -62,6 +68,7 @@ void saveData();
 void timercallback();
 void displayData();
 void CAN_recieve();
+void unzipControl();//デバッグ用
 
 double vx = 0;
 double vy = 0;
@@ -73,7 +80,7 @@ int main()
 
     can.filter(RECIEVE_CAN_ID, 0xFFF, CANStandard, 0);////MY_CAN_ID以外のデータを受け取らないよう設定．後半の0xFFF, CANStandard, 0);は基本変えない
 
-
+    
     for(int i=0; i<4; i++) {
         //モーター加速度の上限
         //無視するために大きくしてある
@@ -107,16 +114,17 @@ void saveData()
 
 void timercallback()//モーターを目標角速度で動かそうとし、一定の間隔で角速度を配列に保存
 {
-    CAN_recieve();
+    //  CAN_recieve();
+    unzipControl(); //デバッグ用
     ///////ここvxvyベタ打ちで動く？？？？
 
-    /*
+
     printf("vx:%11lf, ",vx);
     printf("vy:%11lf, ",vy);
     printf("aimtheta:%11lf, ",aimtheta);
     printf("theta:%11lf, ",theta);
     printf("\r\n");
-    */
+
 
     wheel.setVxy(vx, vy, aimtheta);
     wheel.calOmega();
@@ -175,6 +183,7 @@ void displayData()//保存したデータをprintf
     omega_count=0;
 }
 
+
 void CAN_recieve()
 {
     CANMessage msg;// 送られてきたデータを入れる箱
@@ -185,5 +194,77 @@ void CAN_recieve()
         vy = (msg.data[1] - 128)*4;
         aimtheta = msg.data[2] - 128;
         theta = (msg.data[3] - 128)*2;
+    }
+}
+
+//デバッグ用
+void unzipControl()
+{
+    CANMessage msg;// 送られてきたデータを入れる箱
+
+    if(can.read(msg)) {
+        ;//CANデータの読み取り
+
+
+        RX = msg.data[0] - 128; //<-128~127>に変換
+        RY = msg.data[1] - 128;
+        LX = msg.data[2] - 128;
+        LY = msg.data[3] - 128;
+        R2 = msg.data[4]; //トリガ値 <0~255>
+        L2 = msg.data[5];
+        up = (msg.data[6] & 0b10000000) >> 7;    //rx_buf[6]の値はボタン8個の値を合成したものだから、ビットシフトで1桁に解凍
+        dwn = (msg.data[6] & 0b01000000) >> 6;
+        lft = (msg.data[6] & 0b00100000) >> 5;
+        rit = (msg.data[6] & 0b00010000) >> 4;
+        sqr = (msg.data[6] & 0b00001000) >> 3;
+        crss = (msg.data[6] & 0b00000100) >> 2;
+        cicl = (msg.data[6] & 0b00000010) >> 1;
+        tri = msg.data[6] & 0b00000001;
+        R1 = (msg.data[7] & 0b10000000) >> 7;
+        L1 = (msg.data[7] & 0b01000000) >> 6;
+        R3 = (msg.data[7] & 0b00100000) >> 5;
+        L3 = (msg.data[7] & 0b00010000) >> 4;
+        shr = (msg.data[7] & 0b00001000) >> 3;
+        opt = (msg.data[7] & 0b00000100) >> 2;
+        PSb = (msg.data[7] & 0b00000010) >> 1;
+        touc = msg.data[7] & 0b00000001;
+
+        if(-10 < LX && LX <10) {
+            LX = 0;
+        }
+
+        if(-10 < LY && LY < 10) {
+            LY = 0;
+        }
+
+        vx = LX*4;
+        vy = LY*4;
+        aimtheta = (R2 - L2)/3;
+
+        /*
+                printf("LX:%4d, ",LX);
+                printf("LY:%4d, ",LY);
+                printf("RX:%4d, ",RX);
+                printf("RY:%4d, ",RY);
+                printf("L2:%3d, ",L2);
+                printf("R2:%3d, ",R2);
+                printf("L1:%d, ",L1);
+                printf("R1:%d, ",R1);
+                printf("L3:%d, ",L3);
+                printf("R3:%d, ",R3);
+                printf("↑:%d, ",up);
+                printf("↓:%d, ",dwn);
+                printf("←:%d, ",lft);
+                printf("→:%d, ",rit);
+                printf("□:%d, ",sqr);
+                printf("×:%d, ",crss);
+                printf("〇:%d, ",cicl);
+                printf("△:%d, ",tri);
+                printf("shr:%d, ",shr);
+                printf("opt:%d, ",opt);
+                printf("PSb:%d, ",PSb);
+                printf("touc:%d, ",touc);
+                printf("\r\n");
+        */
     }
 }
