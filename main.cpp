@@ -9,10 +9,10 @@ Serial pc(USBTX,USBRX);
 //デバッグ用
 int8_t RX, RY, LX, LY;
 uint8_t R2, L2, up, dwn, lft, rit, sqr, crss, cicl, tri, R1, L1, R3, L3, shr, opt, PSb, touc;
-const int RECIEVE_CAN_ID = 0x12;
+//const int RECIEVE_CAN_ID = 0x12;
 
 
-//const int RECIEVE_CAN_ID = 0x10; //コントローラーデバッグ時はコメントアウト
+const int RECIEVE_CAN_ID = 0x10; //コントローラーデバッグ時はコメントアウト
 const int CAN_Hz = 1000000;//CANに使用するクロック周波数[Hz]. CAN通信相手と共通させる
 
 CAN can(PA_11,PA_12,CAN_Hz);//CAN_RD, CAN_TDの順
@@ -35,7 +35,7 @@ Ec2multi ec[]= {
     Ec2multi(PB_4,PB_5,RESOLUTION),
     Ec2multi(PA_7,PA_6,RESOLUTION),
     Ec2multi(PB_3,PF_1,RESOLUTION),
-    Ec2multi(PA_2,PF_0,RESOLUTION) //UARTを動作させる時はPA_5に変更、本来はPA_2
+    Ec2multi(PA_5,PF_0,RESOLUTION) //UARTを動作させる時はPA_5に変更、本来はPA_2
 };
 //速度制御のPIDの値,角速度を計算する間隔,dutyの絶対値の上限
 CalPID speed_pid[]= {
@@ -114,8 +114,8 @@ void saveData()
 
 void timercallback()//モーターを目標角速度で動かそうとし、一定の間隔で角速度を配列に保存
 {
-    //  CAN_recieve();
-    unzipControl(); //デバッグ用
+    CAN_recieve();
+    //unzipControl(); //デバッグ用
     ///////ここvxvyベタ打ちで動く？？？？
 
 
