@@ -32,10 +32,10 @@ CAN can(PA_11,PA_12,CAN_Hz);//CAN_RD, CAN_TDの順
 //上から順にタイヤA,B,Cの配列
 //エンコーダ（A層,B層,分解能）
 Ec2multi ec[]= {
-    Ec2multi(PB_4,PB_5,RESOLUTION),
-    Ec2multi(PA_7,PA_6,RESOLUTION),
-    Ec2multi(PB_3,PF_1,RESOLUTION),
-    Ec2multi(PA_5,PF_0,RESOLUTION) //UARTを動作させる時はPA_5に変更、本来はPA_2
+    Ec2multi(PC_3,PC_2,RESOLUTION),
+    Ec2multi(PC_12,PC_10,RESOLUTION),
+    Ec2multi(PB_14,PB_15,RESOLUTION),
+    Ec2multi(PC_6,PC_8,RESOLUTION) 
 };
 //速度制御のPIDの値,角速度を計算する間隔,dutyの絶対値の上限
 CalPID speed_pid[]= {
@@ -48,10 +48,10 @@ CalPID speed_pid[]= {
 CalPID angle_omega_pid(0.0,0.0,0.0,DELTA_T,OMEGA_MAX);
 //モーター（正転,逆転,PWM周期,エンコーダ,CALPIDの角速度PID,角度PID)
 MotorController motor[]= {
-    MotorController(PA_10,PA_9,50,ec[0],speed_pid[0],angle_omega_pid),
-    MotorController(PB_6,PB_7,50,ec[1],speed_pid[1],angle_omega_pid),
-    MotorController(PA_1,PA_3,50,ec[2],speed_pid[2],angle_omega_pid),
-    MotorController(PA_8,PA_4,50,ec[2],speed_pid[2],angle_omega_pid)
+    MotorController(PA_11,PB_1,50,ec[0],speed_pid[0],angle_omega_pid),
+    MotorController(PB_5,PB_4,50,ec[1],speed_pid[1],angle_omega_pid),
+    MotorController(PA_0,PA_1,50,ec[2],speed_pid[2],angle_omega_pid),
+    MotorController(PA_8,PA_9,50,ec[3],speed_pid[3],angle_omega_pid)
 };
 
 Ticker ticker;  //割り込みタイマー
@@ -87,7 +87,7 @@ int main()
         //機体が動き始めたときに動きがずれるなら加速度の上限を下げる
         motor[i].setAccelMax(10000000);
         //ギア比　タイヤ:エンコーダ＝１:rとしたときのrの値
-        ec[i].setGearRatio(1.2);
+        ec[i].setGearRatio(1.0);
     }
     //角速度とduty比の関係式設定
     //横軸をタイヤの角速度[rad/s]とduty比とした時の傾きとy切片

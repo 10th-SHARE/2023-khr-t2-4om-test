@@ -1,42 +1,60 @@
 #pragma once
+//四輪を動かすためのクラス
+//機体座標のx軸正を右向き、y軸を上向きに取ったとき
+//タイヤ0:左上、タイヤ1:右上、タイヤ2:右下、タイヤ3:左下
+#include <cmath>
 class WheelOmega
 {
 public:
-    WheelOmega(): vx_(0),vy_(0),rotate_(0) //初期化
+    //コンストラクタの定義 main関数の前に必ず一度宣言する
+    //dist_wheel: 機体中心からタイヤへの距離[mm]
+    //r_wheel: タイヤの半径[mm]
+    WheelOmega(float dist_wheel, float r_wheel): vx_(0),vy_(0),aimtheta_(0) //初期化
     {
         for(int i =0; i<4; i++) {
-            omega[i]=0;
+            omega[i] = 0.0;
+            k[i] = 1;
         }
+        dist_wheel_ = dist_wheel;
+        inv_r_wheel_ = 1.0f / r_wheel; //割り算は重い処理なので逆数をかける
     }
-    void setVxy(double vx,double vy,double rotate)
+    //vx,vy: 機体座標での移動速度[mm/s]
+    //aimtheta: 機体の回転速度[degree/s] 時計回りが正
+    void setVxy(double vx, double vy, double aimtheta)
     {
-        //vx,vyは機体の移動速度[mm/s]
-        //rotateは機体の回転速度[degree/s] 時計回りが正
-        vx_=vx;
-        vy_=vy;
-        rotate_=rotate;
+        vx_ = vx;
+        vy_ = vy;
+        aimtheta_ = aimtheta * (3.14 / 180.0);
     }
-    double deg_to_rad(double rotate_) //degreeをradに変換
-    {
-        return rotate_*(3.14/180);
-    }
+
     void calOmega() //タイヤそれぞれの目標角速度[rad/s]を計算
     {
-        omega[0]=(vx_*cos(theta_rad)+vy_*sin(theta_rad)+dist_wheel*deg_to_rad(rotate_))*inv_rad_wheel*k0;
-        omega[1]=(vx_*cos(theta_rad)-vy_*sin(theta_rad)+dist_wheel*deg_to_rad(rotate_))*inv_rad_wheel*k1;
-        omega[2]=(-vx_*cos(theta_rad)-vy_*sin(theta_rad)+dist_wheel*deg_to_rad(rotate_))*inv_rad_wheel*k2;
-        omega[3]=(-vx_*cos(theta_rad)+vy_*sin(theta_rad)+dist_wheel*deg_to_rad(rotate_))*inv_rad_wheel*k3;
+        omega[0] = (vx_ * cos(theta_rad) + vy_ * sin(theta_rad) + dist_wheel_ * aimtheta_) * inv_r_wheel_ * k[0];
+        omega[1] = (vx_ * cos(theta_rad) - vy_ * sin(theta_rad) + dist_wheel_ * aimtheta_) * inv_r_wheel_ * k[1];
+        omega[2] = (- vx_ * cos(theta_rad) - vy_ * sin(theta_rad) + dist_wheel_ * aimtheta_) * inv_r_wheel_ * k[2];
+        omega[3] = (- vx_ * cos(theta_rad) + vy_ * sin(theta_rad) + dist_wheel_ * aimtheta_) * inv_r_wheel_ * k[3];
     };
-    double getOmega(int i) //タイヤの目標角速度[rad/s]返す
+    double getOmega(int i) //タイヤの目標角速度[rad/s]を返す
     {
         return omega[i];
     }
+    /*
+    以下はクラスのコンストラクタで初期設定されている
+    設定を変更したいときのみ呼び出す
+    */
+    //タイヤがエンコーダ正の時に反時計回りなら1、時計回りなら-1 (初期設定は全て1)
+    void set_k(int k0, int k1, int k2, int k3)
+    {
+        k[0] = k0;
+        k[1] = k1;
+        k[2] = k2;
+        k[3] = k3;
+    }
 private:
-    double vx_,vy_,rotate_;
+    double vx_, vy_, aimtheta_;
     double omega[4];
-    const double theta_rad=45.0/180*3.14;
-    const double dist_wheel=255.0; //機体中心からタイヤへの距離[mm]
-    const double inv_rad_wheel=0.0157; //タイヤの半径の逆数[1/mm] 割り算は重い処理なので逆数かける
-    const int k0=-1, k1=-1, k2=-1, k3=-1; //タイヤが正転時に反時計回りなら1,時計回りなら-1
+    const double theta_rad = 45.0 / 180.0 * 3.14;
+    float dist_wheel_;
+    float inv_r_wheel_;
+    int k[4];
 };
-
