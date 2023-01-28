@@ -1,13 +1,10 @@
 #pragma once
 #include "WheelOmega.h"
-#include "mbed2/336/platform/mbed_assert.h"
 #include <cmath>
 
 WheelOmega::WheelOmega(float dist_wheel, float r_wheel)
     : vx_(0), vy_(0), aimtheta_(0), theta_rad(THETA_RAD) //初期化
 {
-  MBED_ASSERT(dist_wheel > 0);
-  MBED_ASSERT(r_wheel > 0);
   for (int i = 0; i < 4; i++) {
     omega[i] = 0.0;
     k[i] = 1;
