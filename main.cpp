@@ -1,5 +1,5 @@
 #include "mbed.h"
-#include "4omni.h"
+#include "WheelOmega.h"
 #include "EC.h"
 #define RESOLUTION 2048
 #include "CalPID.h"
@@ -28,6 +28,11 @@ CAN can(PA_11,PA_12,CAN_Hz);//CAN_RD, CAN_TDの順
 #define OMEGA_MAX 6
 //角速度を格納する配列の要素数
 #define NUM_DATA 100
+// オムニ輪の機体中心からの距離
+#define WHEEL_DIST 0
+// オムニ輪の半径(mm)
+#define WHEEL_R 0
+
 
 //上から順にタイヤA,B,Cの配列
 //エンコーダ（A層,B層,分解能）
@@ -55,7 +60,7 @@ MotorController motor[]= {
 };
 
 Ticker ticker;  //割り込みタイマー
-WheelOmega wheel; //クラスwheelOmegaを以下wheelとする
+WheelOmega wheel(WHEEL_DIST, WHEEL_R); //クラスwheelOmegaを以下wheelとする
 
 //角速度を保存する変数と関数
 float aimomega_saved[4][NUM_DATA] = {};
