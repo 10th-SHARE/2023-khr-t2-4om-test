@@ -11,6 +11,9 @@ WheelOmega::WheelOmega(float dist_wheel, float r_wheel)
   }
   dist_wheel_ = dist_wheel;
   inv_r_wheel_ = 1.0f / r_wheel; //割り算は重い処理なので逆数をかける
+
+  SinTr = std::sin(theta_rad);
+  CosTr = std::cos(theta_rad);
 }
 
 // vx,vy: 機体座標での移動速度[mm/s]
@@ -23,9 +26,9 @@ void WheelOmega::setVxy(double vx, double vy, double aimtheta) {
 
 void WheelOmega::calOmega() //タイヤそれぞれの目標角速度[rad/s]を計算
 {
-  double vyTimesSinTr = std::sin(theta_rad);
-  double vxTimesCosTr = std::cos(theta_rad);
-  double distTimesAt = distTimesAt;
+  double vyTimesSinTr = vy_ * SinTr;
+  double vxTimesCosTr = vx_ * CosTr;
+  double distTimesAt = dist_wheel_ * aimtheta_;
 
   omega[0] = (vxTimesCosTr + vyTimesSinTr + distTimesAt) * inv_r_wheel_ * k[0];
   omega[1] = (vxTimesCosTr - vyTimesSinTr + distTimesAt) * inv_r_wheel_ * k[1];

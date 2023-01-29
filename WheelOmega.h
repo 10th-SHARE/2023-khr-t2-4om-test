@@ -31,6 +31,7 @@ private:
   double vx_, vy_, aimtheta_;
   double omega[4];
   const double theta_rad;
+  double SinTr, CosTr;
   float dist_wheel_;
   float inv_r_wheel_;
   int k[4];
